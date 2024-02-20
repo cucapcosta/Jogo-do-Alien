@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício do Alien</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style> body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; } </style>
+</head>
+
+<body>
+    <script>
+        // Define constantes de tamanho do jogo
+        const larguraJogo = 700;
+        const alturaJogo = 850;
+
+        //Configura jogo, carregando constantes acima como tamanho da aba
+        const config = {
+            type: Phaser.AUTO,
+            width: larguraJogo,
+            height: alturaJogo,
+
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            },
+            physics: {
+                default: 'arcade',
+                arcade:{
+                    gravity: {y: 300},
+                    debug: true
+                }
+            }
+        };
+
+        // Inicia jogo utilizando as configurações acima
+        const game = new Phaser.Game(config);
+        var alien;
+        var fogo;
+        var plataforma;
+        var moeda;
+        var pontos = 0;
+        var placar;
+        var danca;
+        var obstaculos;
+
+        function preload() {
+            this.load.image('background', 'assets/bg.png');
+            this.load.image('player', 'assets/alienigena.png');
+            this.load.image('turbo', 'assets/turbo.png')
+            this.load.image('plataforma', 'assets/tijolos.png');
+            this.load.image('moeda', 'assets/moeda.png')
+            this.load.spritesheet('danca', 'assets/sprite.png', {frameWidth: 110, frameHeight: 128});
+        }
+
+        function create() {
+
+           
+            // insere background no meio da tela
+            this.add.image(larguraJogo/2, alturaJogo/2, 'background');
+            //Turbo
+            fogo = this.add.sprite(0, 0, 'turbo').setVisible(false);
+            //Alien
+            alien = this.physics.add.sprite(larguraJogo/2, 0, 'player').setCollideWorldBounds(true);
+            alien.body.setSize(120, 90, true);
+            //Adicionar teclas
+            teclado = this.input.keyboard.createCursorKeys();
+            //Plataforma
+            plataforma = this.physics.add.staticImage(larguraJogo/2, alturaJogo/2, 'plataforma');
+            //Moeda
+            moeda = this.physics.add.sprite(larguraJogo/2, 0, 'moeda')
+            .setCollideWorldBounds(true)
+            .setBounce(0.7);
+            //Placar
+            placar = this.add.text(50, 50, 'Moedas: ' + pontos, {fontSize:'45px', fill:'#495613'});
+            //Dancinha legal
+            danca =this.physics.add.sprite(600,700, 'danca')
+            .setScale(2)
+            .setCollideWorldBounds(true)
+            .setSize(60, 80, true);
+            this.anims.create({
+                key: 'dancar',
+                frames: this.anims.generateFrameNumbers('danca', {start:0, end:79}),
+                frameRate: 10,
+                repeat: -1
+            })
+            danca.anims.play('dancar', true);
+            //Lista de obstáculos
+            obstaculos = [danca, plataforma];
+            //Física
+            for (var i = 0; i<obstaculos.length; i++){
+                this.physics.add.collider(alien, obstaculos[i]);
+            }
+            for (var i = 0; i < obstaculos.length; i++){
+                this.physics.add.collider(moeda, obstaculos[i]);
+            }
+            
+            this.physics.add.overlap(alien, moeda, function(){
+                //Função de bater na moeda
+                moeda.setVisible(false);
+                var posicaoMoedaX = Phaser.Math.RND.between(50, 650);
+                moeda.setPosition(posicaoMoedaX, 0);
+                pontos+=1;
+                placar.setText('Moedas: ' + pontos);
+                moeda.setVisible(true);
+            });
+            
+        }
+
+        function update() {
+            //Movimento Horizontal
+            if(teclado.left.isDown){
+                alien.setVelocityX(-150);
+            } else if (teclado.right.isDown){
+                alien.setVelocityX(150);
+            }else{
+                alien.setVelocityX(0);
+            }
+            //Movimento Y e turbo
+            if(teclado.up.isDown){
+                alien.setVelocityY(-150);
+                ativarTurbo();
+            }else{
+                semTurbo();
+            }
+
+            fogo.setPosition(alien.x, alien.y + alien.height/2);
+        }
+        function ativarTurbo(){
+            fogo.setVisible(true);
+        }
+        function semTurbo(){
+            fogo.setVisible(false);
+        }
+
+    </script>
+</body>
+</html>
